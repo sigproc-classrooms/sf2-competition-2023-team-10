@@ -1,0 +1,31 @@
+# This workflow runs the competition runner against the student code, and uploads the resulting images
+
+name: SF2 Competition Checker
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    # this name must be exactly this for the points to be reported to github classroom
+    name: Autograding
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.10"
+    - name: Update pip
+      run: |
+        python -m pip install --upgrade pip
+    - name: Install my package
+      run: |
+        python -m pip install -r requirements.txt
+
+    - name: Run competition checker
+      uses: sigproc-classrooms/sf2_competition_action@2023
