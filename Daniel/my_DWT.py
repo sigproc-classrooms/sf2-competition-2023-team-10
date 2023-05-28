@@ -22,7 +22,7 @@ def inverse_DWT(X, N, g1, g2):
         return Y
     return inverse_DWT(np.block([[inverse_DWT(X[:m, :m], N-1, g1, g2), X[:m, m:]], [X[m:, :m], X[m:, m:]]]), 1, g1, g2)
 
-def quantdwt(Y: np.ndarray, dwtstep: np.ndarray, qrise=None):
+def quantdwt(Y: np.ndarray, dwtstep: np.ndarray, qrise=None, factors = None, strength = 0):
     """
     Parameters:
         Y: the output of `dwt(X, n)`
@@ -37,27 +37,46 @@ def quantdwt(Y: np.ndarray, dwtstep: np.ndarray, qrise=None):
     Yq = np.zeros(Y.shape)
     dwtent = np.zeros(dwtstep.shape)
     m = Y.shape[0]
+    if factors is None:
+        factors = np.ones(dwtstep.shape)
     for i in range(n):
         m = m//2
-        Yq[:m, m:2*m] = quantise(Y[:m, m:2*m], dwtstep[0, i], qrise)
+        Yq[:m, m:2*m] = quantise(Y[:m, m:2*m], dwtstep[0, i], qrise*np.exp((factors[0, i]-1)*strength))
         dwtent[0, i] =   bpp(Yq[:m, m:2*m])*m*m
-        Yq[m:2*m, :m] = quantise(Y[m:2*m, :m], dwtstep[1, i], qrise)
+        Yq[m:2*m, :m] = quantise(Y[m:2*m, :m], dwtstep[1, i], qrise*np.exp((factors[1, i]-1)*strength))
         dwtent[1, i] =   bpp(Yq[m:2*m, :m])*m*m
-        Yq[m:2*m, m:2*m] = quantise(Y[m:2*m, m:2*m], dwtstep[2, i], qrise)
+        Yq[m:2*m, m:2*m] = quantise(Y[m:2*m, m:2*m], dwtstep[2, i], qrise*np.exp((factors[2, i]-1)*strength))
         dwtent[2, i] =   bpp(Yq[m:2*m, m:2*m])*m*m
-    Yq[:m, :m,] = quantise(Y[:m, :m], dwtstep[0, n], qrise)
+    Yq[:m, :m,] = quantise(Y[:m, :m], dwtstep[0, n], qrise*np.exp((factors[0, n]-1)*strength))
     dwtent[0, n] = bpp(Yq[:m, :m])*m*m
 
     return Yq, dwtent
 
-def DWT_quant(X, N, h1, h2, g1, g2, emse = True, qrise=None):
+
+def get_factors(Y, N):
+    factors = np.ones((3, N+1))
+    m = Y.shape[0]
+    for i in range(N):
+        m = m//2
+        factors[0, i] = np.std(Y[:m, m:2*m])
+        factors[1, i] = np.std(Y[m:2*m, :m])
+        factors[2, i] = np.std(Y[m:2*m, m:2*m])
+    factors[0, N] = np.std(Y[:m, :m])
+    factors = factors[0, N]/factors
+
+    return factors
+
+def DWT_quant(X, N, h1, h2, g1, g2, emse = True, qrise=None, strength=0):
     Xq = quantise(X, 17, qrise)
     rms_ref = np.std(Xq-X)
-    step, ratios = step_size_optimiser(X, h1, h2, g1, g2, rms_ref, np.linspace(1, 15, 100), N, emse, qrise)
+    print("rms_ref:", rms_ref)
+    Y = DWT(X, N, h1, h2)
+    factors = get_factors(Y, N)
+    step, ratios = step_size_optimiser(X, h1, h2, g1, g2, rms_ref, np.linspace(1, 15, 100), N, factors, emse, qrise, strength=0)
     print("step:", step)
     dwtstep = np.ones((3, N+1))*ratios*step
-    Y = DWT(X, N, h1, h2)
-    return quantdwt(Y, dwtstep, qrise)
+
+    return quantdwt(Y, dwtstep, qrise, factors, strength)
 
 def get_ratios(X, N, g1, g2):
     Y = np.zeros(X.shape)
@@ -85,27 +104,31 @@ def get_ratios(X, N, g1, g2):
     # print(energies)
     return np.sqrt(energies[0, 0]/energies[:, :])
 
-def step_size_optimiser(X, h1, h2, g1, g2, target_rms, steps, N, emse = True, qrise=None):
+def step_size_optimiser(X, h1, h2, g1, g2, target_rms, steps, N, factors, emse = True, qrise=None, strength=0):
     if emse: ratios = get_ratios(X, N, g1, g2)
     else: ratios = np.ones((3, N+1))
     error_list = []
     for step in steps:
         Y = DWT(X, N, h1, h2)
-        Yq, _ = quantdwt(Y, step*ratios, qrise)
+        Yq, _ = quantdwt(Y, step*ratios, qrise, factors, strength)
         Z = inverse_DWT(Yq, N, g1, g2)
         error_list.append(np.abs(np.std(Z-X)-target_rms))
     min_index = error_list.index(min(error_list))
     return steps[min_index], ratios
 
-def DWT_analysis(X, N, h1, h2, g1, g2, emse=True, plot=False, qrise=None):
-    Yq, dwtent = DWT_quant(X, N, h1, h2, g1, g2, emse, qrise)
+def DWT_analysis(X, N, h1, h2, g1, g2, emse=True, plot=False, qrise=None, strength=0):
+    Yq, dwtent = DWT_quant(X, N, h1, h2, g1, g2, emse, qrise, strength)
     Z = inverse_DWT(Yq, N, g1, g2)
     
     entropy = np.sum(dwtent)
     HXq = bpp(quantise(X, 17, qrise))*256*256
     CR = HXq/entropy
     print("CR:", CR)
+    print("rms:", np.std(Z-X))
 
     if plot:
-        fig, ax = plt.subplots()
-        plot_image(Z, ax=ax)
+        fig, axs = plt.subplots(1, 2)
+        plot_image(Z, ax=axs[0])
+        plot_image(X, ax=axs[1])
+
+    return Z
