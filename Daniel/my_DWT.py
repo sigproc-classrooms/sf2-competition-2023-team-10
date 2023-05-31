@@ -2,8 +2,9 @@ import matplotlib.pyplot as plt
 from cued_sf2_lab.familiarisation import plot_image
 import numpy as np
 from cued_sf2_lab.laplacian_pyramid import rowdec, rowdec2
-from cued_sf2_lab.laplacian_pyramid import bpp, quantise
+from cued_sf2_lab.laplacian_pyramid import bpp
 from cued_sf2_lab.laplacian_pyramid import rowint, rowint2
+from Daniel.my_LP import quantise
 
 
 def DWT(X, N, h1, h2):
@@ -66,14 +67,21 @@ def get_factors(Y, N):
 
     return factors
 
-def DWT_quant(X, N, h1, h2, g1, g2, emse = True, qrise=None, strength=0):
+def DWT_quant(X, N, h1, h2, g1, g2, step = None, emse = True, qrise=None, strength=0):
     Xq = quantise(X, 17, qrise)
     rms_ref = np.std(Xq-X)
     print("rms_ref:", rms_ref)
     Y = DWT(X, N, h1, h2)
     factors = get_factors(Y, N)
-    step, ratios = step_size_optimiser(X, h1, h2, g1, g2, rms_ref, np.linspace(1, 15, 100), N, factors, emse, qrise, strength=0)
+    if emse: ratios = get_ratios(X, N, g1, g2)
+    else: ratios = np.ones((3, N+1))
+    if step is None: step = step_size_optimiser(X, h1, h2, g1, g2, rms_ref, np.linspace(1, 15, 100), N, ratios, factors, emse, qrise, strength=0)
     print("step:", step)
+
+    # ratios = np.ones(np.shape(ratios))
+    # for i in range(N+1):
+    #     ratios[:, i] *= 0.98**i
+
     dwtstep = np.ones((3, N+1))*ratios*step
 
     return quantdwt(Y, dwtstep, qrise, factors, strength)
@@ -104,9 +112,7 @@ def get_ratios(X, N, g1, g2):
     # print(energies)
     return np.sqrt(energies[0, 0]/energies[:, :])
 
-def step_size_optimiser(X, h1, h2, g1, g2, target_rms, steps, N, factors, emse = True, qrise=None, strength=0):
-    if emse: ratios = get_ratios(X, N, g1, g2)
-    else: ratios = np.ones((3, N+1))
+def step_size_optimiser(X, h1, h2, g1, g2, target_rms, steps, N, ratios, factors, emse = True, qrise=None, strength=0):
     error_list = []
     for step in steps:
         Y = DWT(X, N, h1, h2)
@@ -114,16 +120,17 @@ def step_size_optimiser(X, h1, h2, g1, g2, target_rms, steps, N, factors, emse =
         Z = inverse_DWT(Yq, N, g1, g2)
         error_list.append(np.abs(np.std(Z-X)-target_rms))
     min_index = error_list.index(min(error_list))
-    return steps[min_index], ratios
+    return steps[min_index]
 
-def DWT_analysis(X, N, h1, h2, g1, g2, emse=True, plot=False, qrise=None, strength=0):
-    Yq, dwtent = DWT_quant(X, N, h1, h2, g1, g2, emse, qrise, strength)
+def DWT_analysis(X, N, h1, h2, g1, g2, step = None, emse=True, plot=False, qrise=None, strength=0):
+    Yq, dwtent = DWT_quant(X, N, h1, h2, g1, g2, step, emse, qrise, strength)
     Z = inverse_DWT(Yq, N, g1, g2)
     
     entropy = np.sum(dwtent)
     HXq = bpp(quantise(X, 17, qrise))*256*256
     CR = HXq/entropy
     print("CR:", CR)
+    print("bits:", entropy)
     print("rms:", np.std(Z-X))
 
     if plot:

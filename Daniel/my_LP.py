@@ -1,10 +1,29 @@
 from cued_sf2_lab.simple_image_filtering import halfcos
 from cued_sf2_lab.laplacian_pyramid import rowdec, rowint
-from cued_sf2_lab.laplacian_pyramid import bpp, quantise
+from cued_sf2_lab.laplacian_pyramid import bpp, quant1, quant2
 from cued_sf2_lab.familiarisation import plot_image
 import numpy as np
 import matplotlib.pyplot as plt
 
+
+def quantise(x, step, rise1=None):
+    """
+    Quantise matrix x in one go with step width of step using quant1 and quant2
+
+    If rise1 is defined, the first step rises at rise1, otherwise it rises at
+    step/2 to give a uniform quantiser with a step centred on zero.
+    In any case the quantiser is symmetrical about zero.
+    """
+    if step <= 0:
+        y = x.copy()
+        return y
+    if rise1 is None:
+        rise = step/2.0
+    else:
+        rise = rise1*step
+    # Perform both quantisation steps
+    y = quant2(quant1(x, step, rise), step, rise)
+    return y
 
 def halfcos_filter(n):
     return halfcos(n)
