@@ -1,10 +1,11 @@
 import matplotlib.pyplot as plt
 from cued_sf2_lab.familiarisation import plot_image
-import numpy as np
 from cued_sf2_lab.laplacian_pyramid import rowdec, rowdec2
 from cued_sf2_lab.laplacian_pyramid import bpp
 from cued_sf2_lab.laplacian_pyramid import rowint, rowint2
-from Daniel.my_LP import quantise
+from my_LP import quantise
+from cued_sf2_lab.jpeg import quant1, quant2
+from common import *
 
 
 def DWT(X, N, h1, h2):
@@ -42,16 +43,50 @@ def quantdwt(Y: np.ndarray, dwtstep: np.ndarray, qrise=None, factors = None, str
         factors = np.ones(dwtstep.shape)
     for i in range(n):
         m = m//2
-        Yq[:m, m:2*m] = quantise(Y[:m, m:2*m], dwtstep[0, i], qrise*np.exp((factors[0, i]-1)*strength))
+        Yq[:m, m:2*m] = quant1(Y[:m, m:2*m], dwtstep[0, i], qrise*factors[0, i]*strength)
         dwtent[0, i] =   bpp(Yq[:m, m:2*m])*m*m
-        Yq[m:2*m, :m] = quantise(Y[m:2*m, :m], dwtstep[1, i], qrise*np.exp((factors[1, i]-1)*strength))
+        Yq[m:2*m, :m] = quant1(Y[m:2*m, :m], dwtstep[1, i], qrise*factors[1, i]*strength)
         dwtent[1, i] =   bpp(Yq[m:2*m, :m])*m*m
-        Yq[m:2*m, m:2*m] = quantise(Y[m:2*m, m:2*m], dwtstep[2, i], qrise*np.exp((factors[2, i]-1)*strength))
+        Yq[m:2*m, m:2*m] = quant1(Y[m:2*m, m:2*m], dwtstep[2, i], qrise*factors[2, i]*strength)
         dwtent[2, i] =   bpp(Yq[m:2*m, m:2*m])*m*m
-    Yq[:m, :m,] = quantise(Y[:m, :m], dwtstep[0, n], qrise*np.exp((factors[0, n]-1)*strength))
+    Yq[:m, :m,] = quant1(Y[:m, :m], dwtstep[0, n], qrise*factors[0, n]*strength)
+    dwtent[0, n] = bpp(Yq[:m, :m])*m*m
+
+    return Yq, dwtent, dwtstep, qrise, factors, strength
+
+def quantdwt2(Y: np.ndarray, qrise=None, factors = None, strength = 0):
+    """
+    Parameters:
+        Y: the output of `dwt(X, n)`
+        dwtstep: an array of shape `(3, n+1)`
+    Returns:
+        Yq: the quantized version of `Y`
+        dwtenc: an array of shape `(3, n+1)` containing the entropies
+    """
+    # your code here
+    ratios = get_ratios(Y, N, g1, g2)
+    dwtstep = np.ones((3, N+1))*ratios*step
+    _, n = dwtstep.shape
+    n -= 1
+    Yq = np.zeros(Y.shape)
+    dwtent = np.zeros(dwtstep.shape)
+    m = Y.shape[0]
+    if factors is None:
+        factors = np.ones(dwtstep.shape)
+    for i in range(n):
+        m = m//2
+        Yq[:m, m:2*m] = quant2(Y[:m, m:2*m], dwtstep[0, i], qrise*factors[0, i]*strength)
+        dwtent[0, i] =   bpp(Yq[:m, m:2*m])*m*m
+        Yq[m:2*m, :m] = quant2(Y[m:2*m, :m], dwtstep[1, i], qrise*factors[1, i]*strength)
+        dwtent[1, i] =   bpp(Yq[m:2*m, :m])*m*m
+        Yq[m:2*m, m:2*m] = quant2(Y[m:2*m, m:2*m], dwtstep[2, i], qrise*factors[2, i]*strength)
+        dwtent[2, i] =   bpp(Yq[m:2*m, m:2*m])*m*m
+    Yq[:m, :m,] = quant2(Y[:m, :m], dwtstep[0, n], qrise*factors[0, n]*strength)
     dwtent[0, n] = bpp(Yq[:m, :m])*m*m
 
     return Yq, dwtent
+
+
 
 
 def get_factors(Y, N):
@@ -81,10 +116,14 @@ def DWT_quant(X, N, h1, h2, g1, g2, step = None, emse = True, qrise=None, streng
     # ratios = np.ones(np.shape(ratios))
     # for i in range(N+1):
     #     ratios[:, i] *= 0.98**i
-
+    ratios = get_ratios(X, N, g1, g2)
     dwtstep = np.ones((3, N+1))*ratios*step
 
     return quantdwt(Y, dwtstep, qrise, factors, strength)
+
+
+
+
 
 def get_ratios(X, N, g1, g2):
     Y = np.zeros(X.shape)
@@ -116,7 +155,7 @@ def step_size_optimiser(X, h1, h2, g1, g2, target_rms, steps, N, ratios, factors
     error_list = []
     for step in steps:
         Y = DWT(X, N, h1, h2)
-        Yq, _ = quantdwt(Y, step*ratios, qrise, factors, strength)
+        Yq, _, dwtstep, qrise, factors, strength = quantdwt(Y, step*ratios, qrise, factors, strength)
         Z = inverse_DWT(Yq, N, g1, g2)
         error_list.append(np.abs(np.std(Z-X)-target_rms))
     min_index = error_list.index(min(error_list))

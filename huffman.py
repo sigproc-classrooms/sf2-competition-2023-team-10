@@ -1,10 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from cued_sf2_lab.familiarisation import load_mat_img, plot_image
-from Daniel.my_DWT import DWT
-from Daniel.my_LP import quantise
+from my_DWT import DWT, quantdwt2
+from my_LP import quantise
 from cued_sf2_lab.jpeg import (dwtgroup, runampl, huffenc, 
-        diagscan, huffdes, huffgen, huffdflt)
+        diagscan, huffdes, huffgen, huffdflt, quant2)
 
 def DWT_huffenc(Yq: np.ndarray, N: int = 8,
         opthuff: bool = False, dcbits = 8, log: bool = True
@@ -21,18 +21,18 @@ def DWT_huffenc(Yq: np.ndarray, N: int = 8,
     huffcode, ehuf = huffgen(dhufftab)
     for r in range(0, sy[0], M):
         for c in range(0, sy[1], M):
-            yq = Yq[r:r+M,c:c+M]
+            yqr = Yqr[r:r+M,c:c+M]
             
-            yqflat = yq.flatten('F')
+            yqrflat = yqr.flatten('F')
             # Encode DC coefficient first
-            dccoef = yqflat[0] + 2 ** (dcbits-1)
+            dccoef = yqrflat[0] + 2 ** (dcbits-1)
             if dccoef not in range(2**dcbits):
                 raise ValueError(
                     'DC coefficients too large for desired number of bits')
             vlc.append(np.array([[dccoef, dcbits]]))
             # Encode the other AC coefficients in scan order
             # huffenc() also updates huffhist.
-            ra1 = runampl(yqflat[scan])
+            ra1 = runampl(yqrflat[scan])
             vlc.append(huffenc(huffhist, ra1, ehuf))
     # (0, 2) array makes this work even if `vlc == []`
     vlc = np.concatenate([np.zeros((0, 2), dtype=np.intp)] + vlc)
@@ -58,18 +58,14 @@ def DWT_huffenc(Yq: np.ndarray, N: int = 8,
     vlc = []
     for r in range(0, sy[0], M):
         for c in range(0, sy[1], M):
-            yq = Yq[r:r+M, c:c+M]
-            if r < 2*M and c < 2*M:
-                fig, ax = plt.subplots()
-                plot_image(yq, ax=ax)
-            yqflat = yq.flatten('F')
+            yqr = Yqr[r:r+M, c:c+M]
+            yqrflat = yqr.flatten('F')
             # Encode DC coefficient first
-            dccoef = yqflat[0] + 2 ** (dcbits-1)
-            print(yqflat[0])
+            dccoef = yqrflat[0] + 2 ** (dcbits-1)
             vlc.append(np.array([[dccoef, dcbits]]))
             # Encode the other AC coefficients in scan order
             # huffenc() also updates huffhist.
-            ra1 = runampl(yqflat[scan])
+            ra1 = runampl(yqrflat[scan])
             vlc.append(huffenc(huffhist, ra1, ehuf))
     # (0, 2) array makes this work even if `vlc == []`
     vlc = np.concatenate([np.zeros((0, 2), dtype=np.intp)] + vlc)
@@ -82,7 +78,9 @@ def DWT_huffenc(Yq: np.ndarray, N: int = 8,
     return vlc, dhufftab
 
 
-def DWT_huffdec(vlc: np.ndarray, N: int = 8,
+def DWT_huffdec(vlc: np.ndarray,
+                 dwtstep, qrise, factors, strength, 
+            N: int = 8,
         hufftab = None,
         dcbits: int = 8, W: int = 256, H: int = 256, log: bool = True
         ) -> np.ndarray:
@@ -196,8 +194,9 @@ def DWT_huffdec(vlc: np.ndarray, N: int = 8,
     # if log:
     #     print('Inverse quantising to step size of {}'.format(qstep))
 
-    # Zi = quant2(Zq, qstep, qstep)
+    Zq_inverse_regrouped = dwtgroup(Zq, -N)
+    Zi, _ = quantdwt2(Zq_inverse_regrouped, qrise, factors, strength)
 
 
 
-    return dwtgroup(Zq, -N)
+    return Zi

@@ -2,6 +2,8 @@
 import numpy as np
 from typing import Tuple, Any
 from cued_sf2_lab.jpeg import jpegenc
+from my_DWT import DWT_quant
+from huffman import DWT_huffenc
 
 from .common import HeaderType, jpeg_quant_size
 
@@ -24,5 +26,6 @@ def encode(X: np.ndarray) -> Tuple[np.ndarray, HeaderType]:
     """
     # replace this with your chosen encoding scheme. If you do not use a header,
     # then `return vlc, None`.
-    vlc, hufftab = jpegenc(X, jpeg_quant_size, opthuff=True, log=False)
-    return vlc, hufftab
+    Yq, _, dwtstep, qrise, factors, strength = DWT_quant(X, N, h1, h2, g1, g2, qrise = qrise, strength=strength)
+
+    return DWT_huffenc(Yq, N, dcbits=12, opthuff=True)
