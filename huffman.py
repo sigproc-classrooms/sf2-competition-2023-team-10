@@ -78,8 +78,8 @@ def DWT_huffenc(Yq: np.ndarray, N: int = 8,
     return vlc, dhufftab
 
 
-def DWT_huffdec(vlc: np.ndarray,
-                 dwtstep, qrise, factors, strength, 
+def DWT_huffdec(vlc: np.ndarray, step, factors,
+                qrise, strength, 
             N: int = 8,
         hufftab = None,
         dcbits: int = 8, W: int = 256, H: int = 256, log: bool = True
@@ -105,7 +105,6 @@ def DWT_huffdec(vlc: np.ndarray,
 
         Z: the output greyscale image
     '''
-
     opthuff = (hufftab is not None)
     # Set up standard scan sequence
     M = 2**N
@@ -195,8 +194,10 @@ def DWT_huffdec(vlc: np.ndarray,
     #     print('Inverse quantising to step size of {}'.format(qstep))
 
     Zq_inverse_regrouped = dwtgroup(Zq, -N)
-    Zi, _ = quantdwt2(Zq_inverse_regrouped, qrise, factors, strength)
 
-
+    fig, axs = plt.subplots()
+    plot_image(Zq_inverse_regrouped, ax=axs)
+    
+    Zi = quantdwt2(Zq_inverse_regrouped, step, factors, qrise, strength)
 
     return Zi
