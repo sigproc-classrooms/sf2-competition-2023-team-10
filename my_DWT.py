@@ -251,14 +251,13 @@ def step_size_optimiser_new(Y, h1, h2, g1, g2, N, target_bits = 38500, emse = Tr
 
 
 def DWT_analysis(X, N, h1, h2, g1, g2, step = None, emse=True, plot=False, qrise=None, strength=0):
-    Yq, dwtent = DWT_quant(X, N, h1, h2, g1, g2, step, emse, qrise, strength)
+    Yq, _, __ = DWT_quant(X, N, h1, h2, g1, g2, step, emse, qrise, strength)
     Z = inverse_DWT(Yq, N, g1, g2)
     
-    entropy = np.sum(dwtent)
     HXq = bpp(quantise(X, 17, qrise))*256*256
-    CR = HXq/entropy
-    print("CR:", CR)
-    print("bits:", entropy)
+    # CR = HXq/entropy
+    # print("CR:", CR)
+    # print("bits:", entropy)
     print("rms:", np.std(Z-X))
 
     if plot:

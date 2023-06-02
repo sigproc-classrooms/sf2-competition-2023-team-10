@@ -26,6 +26,7 @@ def DWT_huffenc(Yq: np.ndarray, N: int = 8,
             yqrflat = yqr.flatten('F')
             # Encode DC coefficient first
             dccoef = yqrflat[0] + 2 ** (dcbits-1)
+            print(yqrflat[0])
             if dccoef not in range(2**dcbits):
                 raise ValueError(
                     'DC coefficients too large for desired number of bits')
