@@ -100,9 +100,9 @@ def DWT_quant(X, N, h1, h2, g1, g2, step = None, emse = True, qrise=None, streng
 
     Y = DWT(X, N, h1, h2)
     ratios = get_ratios(Y, N, g1, g2)
-    print("AAAA")
     factors = get_factors(Y, N)
-    if step is None: step = step_size_optimiser(X, h1, h2, g1, g2, 5, np.linspace(1, 20, 50), N, ratios, factors, emse, qrise, strength=0)
+    # Y, h1, h2, g1, g2, N, target_bits = 38500, emse = True, qrise=None, strength=0)
+    if step is None: step = step_size_optimiser_new(Y, h1, h2, g1, g2, N, ratios, factors, 38500, emse, qrise, strength=strength)
     print("step:", step)
     dwtstep = np.ones((3, N+1))*ratios*step
     print("bananas")
@@ -121,9 +121,7 @@ def get_ratios(X, N, g1, g2):
     Y = np.zeros(X.shape)
     energies = np.zeros((3, N+1))
     m = X.shape[0]
-    print(m)
     for i in range(N):
-        print(i, m)
         m = m//2
         Y[m//2, 3*m//2] = 100
         Z = inverse_DWT(Y, N, g1, g2)
@@ -229,24 +227,17 @@ def step_size_optimiser(X, h1, h2, g1, g2, target_rms, steps, N, ratios, factors
     return steps[min_index]
 
 
-def step_size_optimiser_new(Y, h1, h2, g1, g2, N, target_bits = 38500, emse = True, qrise=None, strength=0):
+def step_size_optimiser_new(Y, h1, h2, g1, g2, N, ratios, factors, target_bits = 38500,  emse = True, qrise=None, strength=0):
     # error_list = []
-    print("aaaa")
-    ratios = np.ones((3, N+1))
-    print(10)
-    factors = get_factors(Y, N)
-    print(factors)
-    print("aaaa")
     def encoded_size(step):
         dwtstep = np.ones((3, N+1))*ratios*step
         Yq, _ = quantdwt(Y, dwtstep, factors, qrise, strength)
-        print(Yq.shape)
-        vlc, header = DWT_huffenc(Yq, N, dcbits=32, opthuff=True)
-        return np.abs(np.sum(vlc[:, 1])-target_bits)
+        vlc, header = DWT_huffenc(Yq, N, dcbits=12, opthuff=True, log=False)
+        bits = np.sum(vlc[:, 1])
+        print("bits: {}, step: {}".format(bits, step))
+        return np.abs(bits-target_bits)
 
-    encoded_size(10)
-
-    return minimize_scalar(encoded_size, bounds=(1, 40)).x
+    return minimize_scalar(encoded_size, bounds=(1, 20)).x
 
 
 

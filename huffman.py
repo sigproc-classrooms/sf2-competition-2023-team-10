@@ -26,7 +26,6 @@ def DWT_huffenc(Yq: np.ndarray, N: int = 8,
             yqrflat = yqr.flatten('F')
             # Encode DC coefficient first
             dccoef = yqrflat[0] + 2 ** (dcbits-1)
-            print(yqrflat[0])
             if dccoef not in range(2**dcbits):
                 raise ValueError(
                     'DC coefficients too large for desired number of bits')
@@ -195,9 +194,6 @@ def DWT_huffdec(vlc: np.ndarray, step, factors,
     #     print('Inverse quantising to step size of {}'.format(qstep))
 
     Zq_inverse_regrouped = dwtgroup(Zq, -N)
-
-    fig, axs = plt.subplots()
-    plot_image(Zq_inverse_regrouped, ax=axs)
     
     Zi = quantdwt2(Zq_inverse_regrouped, step, factors, qrise, strength)
 

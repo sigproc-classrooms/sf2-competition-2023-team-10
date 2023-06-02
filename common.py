@@ -13,14 +13,14 @@ HeaderType = HuffmanTable  # using the example jpeg encoder
 # a constant shared by the encoder and decoder
 jpeg_quant_size = 128
 
-N = 7
+N = 3
 h1 = np.array([-1, 2, 6, 2, -1])/8
 h2 = np.array([-1, 2, -1])/4
 g1 = np.array([1, 2, 1])/2
 g2 = np.array([-1, -2, 6, -2, -1])/4
 
-qrise = 1.3
-strength = 1
+qrise = 1
+strength = 2
 
 def my_function():
     pass
