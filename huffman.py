@@ -138,9 +138,10 @@ def PCA_huffenc(pca_result: np.ndarray,
 
 
 def PCA_huffdec(vlc: np.ndarray, 
-
+        pca_object,
         hufftab = None,
         log: bool = True
+
         ) -> np.ndarray:
     '''
     Decodes a (simplified) JPEG bit stream to an image
@@ -163,6 +164,10 @@ def PCA_huffdec(vlc: np.ndarray,
 
         Z: the output greyscale image
     '''
+    # cumulative_variance = np.cumsum(pca_object.explained_variance_ratio_)
+    # PCA_components = np.argmax(cumulative_variance>0.99)
+    # print(PCA_components)
+
     opthuff = (hufftab is not None)
     # Set up standard scan sequence
 
@@ -201,6 +206,7 @@ def PCA_huffdec(vlc: np.ndarray,
         print('Decoding rows')
     for r in range(256):
         yq = np.zeros(PCA_components)
+        print(f'Shape of yq is: yq.shape')
         cf=0
         # Loop for each non-zero AC coef.
         while np.any(vlc[i] != eob):

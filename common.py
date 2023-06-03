@@ -21,7 +21,7 @@ g2 = np.array([-1, -2, 6, -2, -1])/4
 
 step = 17
 
-PCA_components = 100
+PCA_components = 94
 
 def my_function():
     pass

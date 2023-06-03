@@ -7,8 +7,11 @@ def PCA_DWT(X):
 
     pca = PCA(n_components=PCA_components)
 
-    reduced_r = pca.fit_transform(X)
-
+    pca.fit(X)
+    cumulative_variance = np.cumsum(pca.explained_variance_ratio_)
+    # k = np.argmax(cumulative_variance>0.99)
+    # print(k)
+    reduced_r = pca.transform(X)
     return pca, reduced_r
 
 def inverse_PCA_DWT(pca, reduced_r):
