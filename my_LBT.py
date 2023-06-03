@@ -2,10 +2,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 from cued_sf2_lab.familiarisation import plot_image
 from cued_sf2_lab.dct import colxfm
-from Daniel.my_DCT import DCT, inverse_DCT, dctbpp, inverse_regroup
+from my_DCT import DCT, inverse_DCT, dctbpp, inverse_regroup
 from cued_sf2_lab.lbt import pot_ii
 from cued_sf2_lab.laplacian_pyramid import bpp
-from Daniel.my_LP import quantise
+from my_LP import quantise
 from cued_sf2_lab.dct import regroup
 
 

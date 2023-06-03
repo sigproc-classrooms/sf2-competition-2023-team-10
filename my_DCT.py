@@ -5,7 +5,7 @@ from cued_sf2_lab.dct import colxfm
 from cued_sf2_lab.familiarisation import plot_image
 from cued_sf2_lab.dct import regroup
 from cued_sf2_lab.laplacian_pyramid import bpp
-from Daniel.my_LP import quantise
+from my_LP import quantise
 
 def dctbpp(Yr, N):
     bits = 0

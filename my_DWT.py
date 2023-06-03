@@ -70,7 +70,6 @@ def quantdwt2(Y: np.ndarray, step, factors, qrise=None, strength = 0):
     n -= 1
     Yq = np.zeros(Y.shape)
     m = Y.shape[0]
-
     for i in range(n):
         m = m//2
         Yq[:m, m:2*m] = quant2(Y[:m, m:2*m], dwtstep[0, i], qrise*factors[0, i]*strength)
@@ -101,6 +100,9 @@ def DWT_quant(X, N, h1, h2, g1, g2, step = None, emse = True, qrise=None, streng
     Y = DWT(X, N, h1, h2)
     ratios = get_ratios(Y, N, g1, g2)
     factors = get_factors(Y, N)
+
+    # Maybe do PCA here
+
     # Y, h1, h2, g1, g2, N, target_bits = 38500, emse = True, qrise=None, strength=0)
     if step is None: step = step_size_optimiser_new(Y, h1, h2, g1, g2, N, ratios, factors, 38500, emse, qrise, strength=strength)
     print("step:", step)
@@ -237,12 +239,13 @@ def step_size_optimiser_new(Y, h1, h2, g1, g2, N, ratios, factors, target_bits =
         print("bits: {}, step: {}".format(bits, step))
         return np.abs(bits-target_bits)
 
-    return minimize_scalar(encoded_size, bounds=(1, 20)).x
+    return minimize_scalar(encoded_size, bounds=(1, 40)).x
 
 
 
 def DWT_analysis(X, N, h1, h2, g1, g2, step = None, emse=True, plot=False, qrise=None, strength=0):
-    Yq, _, __ = DWT_quant(X, N, h1, h2, g1, g2, step, emse, qrise, strength)
+    Yq, factors, step_optimal = DWT_quant(X, N, h1, h2, g1, g2, step, emse, qrise, strength)
+    Yq = quantdwt2(Yq, step_optimal, factors, qrise, strength)
     Z = inverse_DWT(Yq, N, g1, g2)
     
     HXq = bpp(quantise(X, 17, qrise))*256*256
