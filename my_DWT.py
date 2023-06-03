@@ -95,20 +95,20 @@ def get_factors(Y, N):
 
     return factors
 
-def DWT_quant(X, emse = True):
+def DWT_quant(X, emse = True, log=False, strength = None):
 
     Y = DWT(X, N)
     ratios = get_ratios(Y, N, g1, g2)
     factors = get_factors(Y, N)
 
-    strength = strength_optimiser_new(Y, ratios, factors, 38500, emse)
+    if strength is None: strength = strength_optimiser_new(Y, ratios, factors, 38500, emse, log=log)
     dwtstep = np.ones((3, N+1))*ratios*step
     print("bananas")
 
     Yq, factors = quantdwt(Y, dwtstep, factors, strength)
-    pca_object, pca_result = PCA_DWT(Yq)
+    pca_result = SVD(Yq)
     print("apple sauce")
-    return pca_object, pca_result, factors, strength
+    return pca_result, factors, strength
 
 
 
@@ -197,19 +197,19 @@ def PCA_huffenc(pca_result: np.ndarray,
 
 
 
-def strength_optimiser_new(Y, ratios, factors, target_bits = 38500, emse = True):
+def strength_optimiser_new(Y, ratios, factors, target_bits = 38500, emse = True, log=False):
     # error_list = []
-    print(target_bits)
+    if log: print(target_bits)
     def encoded_size(strength):
         dwtstep = np.ones((3, N+1))*ratios*step
         Yq, _ = quantdwt(Y, dwtstep, factors, strength)
 
-        pca, result = PCA_DWT(Yq)
+        result = SVD(Yq)
         result_clipped = np.clip(result, -1023, 1023) # Maybe put in the main functions
         vlc, header = PCA_huffenc(result_clipped, opthuff=True, log=False)
 
         bits = np.sum(vlc[:, 1])
-        print("bits: {}, strength: {}".format(bits, strength))
+        if log: print("bits: {}, strength: {}".format(bits, strength))
         return np.abs(bits-target_bits)
 
     return minimize_scalar(encoded_size, bounds=(0, 10)).x

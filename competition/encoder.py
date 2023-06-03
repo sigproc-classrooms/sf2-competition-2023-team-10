@@ -3,7 +3,8 @@ import numpy as np
 from typing import Tuple, Any
 from cued_sf2_lab.jpeg import jpegenc
 from my_DWT import DWT_quant
-from huffman import DWT_huffenc
+from huffman import *
+from PCA_DWT import *
 
 from .common import HeaderType, jpeg_quant_size
 
@@ -12,7 +13,12 @@ def header_bits(header: HeaderType) -> int:
     
     If you have no header, return `0`. """
     # replace this with your size estimate, and a comment explaining how you got it!
-    return (len(header.bits) + len(header.huffval)) * 8
+    header_huff, pca_object, factors, strength = header
+
+    factors_size = len(factors.flatten()) * 16
+
+
+    return (len(header_huff.bits) + len(header_huff.huffval)) * 8
 
 
 def encode(X: np.ndarray) -> Tuple[np.ndarray, HeaderType]:
@@ -26,6 +32,10 @@ def encode(X: np.ndarray) -> Tuple[np.ndarray, HeaderType]:
     """
     # replace this with your chosen encoding scheme. If you do not use a header,
     # then `return vlc, None`.
-    Yq, _, dwtstep, qrise, factors, strength = DWT_quant(X, N, h1, h2, g1, g2, qrise = qrise, strength=strength)
+    
 
-    return DWT_huffenc(Yq, N, dcbits=12, opthuff=True)
+    pca_object, pca_result, factors, strength = DWT_quant(X)
+    vlc, header_huff = PCA_huffenc(pca_result, opthuff=True)
+    header = (header_huff, pca_object, factors, strength)
+
+    return vlc, header
