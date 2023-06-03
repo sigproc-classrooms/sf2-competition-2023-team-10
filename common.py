@@ -19,8 +19,9 @@ h2 = np.array([-1, 2, -1])/4
 g1 = np.array([1, 2, 1])/2
 g2 = np.array([-1, -2, 6, -2, -1])/4
 
-qrise = 1.2
-strength = 2.8
+step = 17
+
+PCA_components = 100
 
 def my_function():
     pass
