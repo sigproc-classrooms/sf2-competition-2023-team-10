@@ -1,0 +1,47 @@
+{
+  "required": {
+    "lighthouse": {
+      "rms": 33.334473088290906,
+      "fail": false,
+      "total_bits": 39922
+    },
+    "bridge": {
+      "rms": 29.626131204377607,
+      "fail": false,
+      "total_bits": 40403
+    },
+    "flamingo": {
+      "rms": 35.930795969505944,
+      "fail": false,
+      "total_bits": 40092
+    }
+  },
+  "extra": {
+    "competition/2018": {
+      "rms": 34.927021144957905,
+      "fail": false,
+      "total_bits": 40245
+    },
+    "competition/2019": {
+      "rms": 23.871533000837523,
+      "fail": false,
+      "total_bits": 40086
+    },
+    "competition/2020": {
+      "rms": 39.31372159203812,
+      "fail": true,
+      "total_bits": 47286
+    },
+    "competition/2021": {
+      "rms": 34.69801026939863,
+      "fail": false,
+      "total_bits": 40129
+    },
+    "competition/2022": {
+      "rms": 36.41517493396984,
+      "fail": false,
+      "total_bits": 40027
+    }
+  },
+  "failed": false
+}
