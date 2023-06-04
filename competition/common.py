@@ -22,7 +22,7 @@ g2 = np.array([-1, -2, 6, -2, -1])/4
 step = 20
 
 PCA_components = 94
-svd_dimension = 50
+svd_dimension = 100
 
 def my_function():
     pass
