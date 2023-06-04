@@ -7,8 +7,8 @@ from cued_sf2_lab.jpeg import (dwtgroup, runampl, huffenc,
         diagscan, huffdes, huffgen, huffdflt, quant2)
 from common import *
 
-def DWT_huffenc(Yq: np.ndarray, N: int = 8,
-        opthuff: bool = False, dcbits = 8, log: bool = True
+def DWT_huffenc(Yq: np.ndarray,
+        opthuff: bool = False, dcbits = 12, log: bool = True
         ):
 
     Yq = Yq.astype('int')
@@ -91,8 +91,8 @@ def PCA_huffenc(pca_result: np.ndarray,
     vlc = []
     dhufftab = huffdflt(1)  # Default tables.
     huffcode, ehuf = huffgen(dhufftab)
-    for r in range(rows):
-        yqrflat = pca_result[r]
+    for r in range(cols):
+        yqrflat = pca_result[:, r]
 
         ra1 = runampl(yqrflat)
         vlc.append(huffenc(huffhist, ra1, ehuf))
@@ -118,9 +118,9 @@ def PCA_huffenc(pca_result: np.ndarray,
         print('Coding rows (second pass)')
     huffhist = np.zeros(16 ** 2)
     vlc = []
-    for r in range(rows):
+    for r in range(cols):
             
-        yqrflat = pca_result[r]
+        yqrflat = pca_result[:, r]
 
         ra1 = runampl(yqrflat)
         vlc.append(huffenc(huffhist, ra1, ehuf))
@@ -137,8 +137,7 @@ def PCA_huffenc(pca_result: np.ndarray,
 
 
 
-def PCA_huffdec(vlc: np.ndarray, 
-        pca_object,
+def PCA_huffdec(vlc: np.ndarray,    
         hufftab = None,
         log: bool = True
 
@@ -200,13 +199,12 @@ def PCA_huffdec(vlc: np.ndarray,
     eob = ehuf[0]
     run16 = ehuf[15 * 16]
     i = 0
-    Zq = np.zeros((256, PCA_components))
+    Zq = np.zeros((513, svd_dimension))
 
     if log:
         print('Decoding rows')
-    for r in range(256):
-        yq = np.zeros(PCA_components)
-        print(f'Shape of yq is: yq.shape')
+    for r in range(svd_dimension):
+        yq = np.zeros(513)
         cf=0
         # Loop for each non-zero AC coef.
         while np.any(vlc[i] != eob):
@@ -240,7 +238,7 @@ def PCA_huffdec(vlc: np.ndarray,
         # End-of-block detected, save block.
         i += 1
 
-        Zq[r] = yq
+        Zq[:, r] = yq
 
     # if log:
     #     print('Inverse quantising to step size of {}'.format(qstep))
@@ -251,11 +249,9 @@ def PCA_huffdec(vlc: np.ndarray,
 
 
 
-def DWT_huffdec(vlc: np.ndarray, step, factors,
-            strength, 
-            N: int = 8,
+def DWT_huffdec(vlc: np.ndarray, 
         hufftab = None,
-        dcbits: int = 8, W: int = 256, H: int = 256, log: bool = True
+        dcbits: int = 12, W: int = 256, H: int = 256, log: bool = True
         ) -> np.ndarray:
     '''
     Decodes a (simplified) JPEG bit stream to an image
@@ -368,6 +364,5 @@ def DWT_huffdec(vlc: np.ndarray, step, factors,
 
     Zq_inverse_regrouped = dwtgroup(Zq, -N)
     
-    Zi = quantdwt2(Zq_inverse_regrouped, step, factors, strength)
 
-    return Zi
+    return Zq_inverse_regrouped

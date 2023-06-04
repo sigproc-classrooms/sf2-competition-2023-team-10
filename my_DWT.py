@@ -95,20 +95,20 @@ def get_factors(Y, N):
 
     return factors
 
-def DWT_quant(X, emse = True):
+def DWT_quant(X, emse = True, log=False, strength = None):
 
     Y = DWT(X, N)
     ratios = get_ratios(Y, N, g1, g2)
     factors = get_factors(Y, N)
 
-    strength = strength_optimiser_new(Y, ratios, factors, 38500, emse)
+    if strength is None: strength = strength_optimiser_new(Y, ratios, factors, 38500, emse, log=log)
     dwtstep = np.ones((3, N+1))*ratios*step
     print("bananas")
 
     Yq, factors = quantdwt(Y, dwtstep, factors, strength)
-    pca_object, pca_result = PCA_DWT(Yq)
+    # pca_result = SVD(Yq)
     print("apple sauce")
-    return pca_object, pca_result, factors, strength
+    return Yq, factors, strength
 
 
 
@@ -141,22 +141,34 @@ def get_ratios(X, N, g1, g2):
     return np.sqrt(energies[0, 0]/energies[:, :])
 
 
-def PCA_huffenc(pca_result: np.ndarray,
-        opthuff: bool = False, log: bool = True
+def DWT_huffenc(Yq: np.ndarray, N: int = 8,
+        opthuff: bool = False, dcbits = 8, log: bool = True
         ):
 
-    pca_result = pca_result.astype('int')
-
-    rows, cols = pca_result.shape
+    Yq = Yq.astype('int')
+    Yqr = dwtgroup(Yq, N)
+    M = 2**N
+    sy = Yqr.shape
     huffhist = np.zeros(16 ** 2)
+    scan = diagscan(M)
     vlc = []
     dhufftab = huffdflt(1)  # Default tables.
     huffcode, ehuf = huffgen(dhufftab)
-    for r in range(rows):
-        yqrflat = pca_result[r]
-
-        ra1 = runampl(yqrflat)
-        vlc.append(huffenc(huffhist, ra1, ehuf))
+    for r in range(0, sy[0], M):
+        for c in range(0, sy[1], M):
+            yqr = Yqr[r:r+M,c:c+M]
+            
+            yqrflat = yqr.flatten('F')
+            # Encode DC coefficient first
+            dccoef = yqrflat[0] + 2 ** (dcbits-1)
+            if dccoef not in range(2**dcbits):
+                raise ValueError(
+                    'DC coefficients too large for desired number of bits')
+            vlc.append(np.array([[dccoef, dcbits]]))
+            # Encode the other AC coefficients in scan order
+            # huffenc() also updates huffhist.
+            ra1 = runampl(yqrflat[scan])
+            vlc.append(huffenc(huffhist, ra1, ehuf))
     # (0, 2) array makes this work even if `vlc == []`
     vlc = np.concatenate([np.zeros((0, 2), dtype=np.intp)] + vlc)
 
@@ -179,12 +191,17 @@ def PCA_huffenc(pca_result: np.ndarray,
         print('Coding rows (second pass)')
     huffhist = np.zeros(16 ** 2)
     vlc = []
-    for r in range(rows):
-            
-        yqrflat = pca_result[r]
-
-        ra1 = runampl(yqrflat)
-        vlc.append(huffenc(huffhist, ra1, ehuf))
+    for r in range(0, sy[0], M):
+        for c in range(0, sy[1], M):
+            yqr = Yqr[r:r+M, c:c+M]
+            yqrflat = yqr.flatten('F')
+            # Encode DC coefficient first
+            dccoef = yqrflat[0] + 2 ** (dcbits-1)
+            vlc.append(np.array([[dccoef, dcbits]]))
+            # Encode the other AC coefficients in scan order
+            # huffenc() also updates huffhist.
+            ra1 = runampl(yqrflat[scan])
+            vlc.append(huffenc(huffhist, ra1, ehuf))
     # (0, 2) array makes this work even if `vlc == []`
     vlc = np.concatenate([np.zeros((0, 2), dtype=np.intp)] + vlc)
 
@@ -197,19 +214,18 @@ def PCA_huffenc(pca_result: np.ndarray,
 
 
 
-def strength_optimiser_new(Y, ratios, factors, target_bits = 38500, emse = True):
+def strength_optimiser_new(Y, ratios, factors, target_bits = 38500, emse = True, log=False):
     # error_list = []
-    print(target_bits)
+    if log: print(target_bits)
     def encoded_size(strength):
         dwtstep = np.ones((3, N+1))*ratios*step
         Yq, _ = quantdwt(Y, dwtstep, factors, strength)
 
-        pca, result = PCA_DWT(Yq)
-        result_clipped = np.clip(result, -1023, 1023) # Maybe put in the main functions
-        vlc, header = PCA_huffenc(result_clipped, opthuff=True, log=False)
+        # result_clipped = np.clip(result, -1023, 1023) # Maybe put in the main functions
+        vlc, header = DWT_huffenc(Yq, dcbits=12, opthuff=True, log=False)
 
         bits = np.sum(vlc[:, 1])
-        print("bits: {}, strength: {}".format(bits, strength))
+        if log: print("bits: {}, strength: {}".format(bits, strength))
         return np.abs(bits-target_bits)
 
     return minimize_scalar(encoded_size, bounds=(0, 10)).x
