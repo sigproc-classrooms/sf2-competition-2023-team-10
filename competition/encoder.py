@@ -15,8 +15,12 @@ def header_bits(header: HeaderType) -> int:
     # replace this with your size estimate, and a comment explaining how you got it!
     header_huff, factors, strength = header
 
+
+    # each factor value is a float16
     factors_size = len(factors.flatten()) * 16
-    strength_size = 4
+
+    # the strength is saved as float32
+    strength_size = 2 * 8 
 
 
     return (len(header_huff.bits) + len(header_huff.huffval)) * 8 + strength_size + factors_size

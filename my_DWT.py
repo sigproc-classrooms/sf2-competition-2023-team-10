@@ -100,6 +100,7 @@ def DWT_quant(X, emse = True, log=False, strength = None):
     Y = DWT(X, N)
     ratios = get_ratios(Y, N, g1, g2)
     factors = get_factors(Y, N)
+    factors = np.float16(factors)
 
     if strength is None: strength = strength_optimiser_new(Y, ratios, factors, 38500, emse, log=log)
     dwtstep = np.ones((3, N+1))*ratios*step
@@ -228,7 +229,9 @@ def strength_optimiser_new(Y, ratios, factors, target_bits = 38500, emse = True,
         if log: print("bits: {}, strength: {}".format(bits, strength))
         return np.abs(bits-target_bits)
 
-    return minimize_scalar(encoded_size, bounds=(0, 10)).x
+    strength_optimal = minimize_scalar(encoded_size, bounds=(0, 10)).x
+
+    return np.float16(strength_optimal)
 
 
 
