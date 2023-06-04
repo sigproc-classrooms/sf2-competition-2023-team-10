@@ -19,7 +19,7 @@ def header_bits(header: HeaderType) -> int:
     # each factor value is a float16
     factors_size = len(factors.flatten()) * 16
 
-    # the strength is saved as float32
+    # the strength is saved as float16
     strength_size = 2 * 8 
 
 

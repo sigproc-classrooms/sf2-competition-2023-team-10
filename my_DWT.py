@@ -214,7 +214,6 @@ def DWT_huffenc(Yq: np.ndarray, N: int = 8,
     return vlc, dhufftab
 
 
-
 def strength_optimiser_new(Y, ratios, factors, target_bits = 38500, emse = True, log=False):
     # error_list = []
     if log: print(target_bits)
