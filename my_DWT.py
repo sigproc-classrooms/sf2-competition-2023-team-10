@@ -55,8 +55,8 @@ def quantdwt(Y: np.ndarray, dwtstep, factors, strength):
 
     if np.max(np.abs(Yq)) > 1023:
         print("Warning: step size too small leads to too large values for run-ampl")
-        Yq_clipped = np.clip(Yq, -1023, 1023)
-    return Yq_clipped, factors
+        Yq = np.clip(Yq, -1023, 1023)
+    return Yq, factors
 
 def quantdwt2(Y: np.ndarray, factors, strength):
     """
