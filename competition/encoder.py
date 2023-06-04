@@ -6,7 +6,7 @@ from my_DWT import DWT_quant
 from huffman import *
 from PCA_DWT import *
 
-from .common import HeaderType, jpeg_quant_size
+from common import *
 
 def header_bits(header: HeaderType) -> int:
     """ Estimate the number of bits in your header.
