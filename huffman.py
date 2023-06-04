@@ -5,7 +5,7 @@ from my_DWT import DWT, quantdwt2
 from my_LP import quantise
 from cued_sf2_lab.jpeg import (dwtgroup, runampl, huffenc, 
         diagscan, huffdes, huffgen, huffdflt, quant2)
-from common import *
+from common_exp import *
 
 def DWT_huffenc(Yq: np.ndarray,
         opthuff: bool = False, dcbits = 12, log: bool = True
@@ -135,7 +135,7 @@ def PCA_huffenc(pca_result: np.ndarray,
     return vlc, dhufftab
 
 
-
+svd_dimension = 50
 
 def PCA_huffdec(vlc: np.ndarray,    
         hufftab = None,

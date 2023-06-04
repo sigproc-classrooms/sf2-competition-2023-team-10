@@ -1,6 +1,6 @@
 import numpy as np
 # from sklearn.decomposition import PCA
-from common import *
+from common_exp import *
 from my_LP import quantise
 
 
@@ -16,6 +16,8 @@ from my_LP import quantise
 # def inverse_PCA_DWT_old(reduced_r):
 #     pca = PCA(n_components=PCA_components)
 #     return pca.inverse_transform(reduced_r)
+
+svd_dimension = 50
 
 def SVD(X):
 

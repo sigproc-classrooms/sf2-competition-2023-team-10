@@ -11,7 +11,6 @@ HeaderType = HuffmanTable  # using the example jpeg encoder
 # HeaderType = Any         # if you're using some other header forma
 
 # a constant shared by the encoder and decoder
-jpeg_quant_size = 128
 
 N = 7
 h1 = np.array([-1, 2, 6, 2, -1])/8
@@ -21,8 +20,6 @@ g2 = np.array([-1, -2, 6, -2, -1])/4
 
 step = 17
 
-PCA_components = 94
-svd_dimension = 50
 
 def my_function():
     pass

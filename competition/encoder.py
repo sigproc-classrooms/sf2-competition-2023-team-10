@@ -5,8 +5,7 @@ from cued_sf2_lab.jpeg import jpegenc
 from my_DWT import DWT_quant
 from huffman import *
 from PCA_DWT import *
-
-from .common import HeaderType, jpeg_quant_size
+from .common import *
 
 def header_bits(header: HeaderType) -> int:
     """ Estimate the number of bits in your header.
@@ -19,7 +18,7 @@ def header_bits(header: HeaderType) -> int:
     # each factor value is a float16
     factors_size = len(factors.flatten()) * 16
 
-    # the strength is saved as float32
+    # the strength is saved as float16
     strength_size = 2 * 8 
 
 
@@ -37,7 +36,7 @@ def encode(X: np.ndarray) -> Tuple[np.ndarray, HeaderType]:
     """
     # replace this with your chosen encoding scheme. If you do not use a header,
     # then `return vlc, None`.
-    
+    X = X - np.mean(X)
 
     DWT_result, factors, strength = DWT_quant(X, log = False)
     vlc, header_huff = DWT_huffenc(DWT_result, dcbits=12, opthuff=True)
