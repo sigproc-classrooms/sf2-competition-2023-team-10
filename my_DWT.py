@@ -53,6 +53,9 @@ def quantdwt(Y: np.ndarray, dwtstep, factors, strength):
         Yq[m:2*m, m:2*m] = quant1(Y[m:2*m, m:2*m], dwtstep[2, i], factors[2, i]*strength)
     Yq[:m, :m,] = quant1(Y[:m, :m], dwtstep[0, n], factors[0, n]*strength)
 
+    if np.max(np.abs(Yq)) > 1023:
+        print("Warning: step size too small leads to too large values for run-ampl")
+        Yq = np.clip(Yq, -1023, 1023)
     return Yq, factors
 
 def quantdwt2(Y: np.ndarray, factors, strength):
@@ -214,7 +217,6 @@ def DWT_huffenc(Yq: np.ndarray, N: int = 8,
     return vlc, dhufftab
 
 
-
 def strength_optimiser_new(Y, ratios, factors, target_bits = 38500, emse = True, log=False):
     # error_list = []
     if log: print(target_bits)
@@ -222,7 +224,6 @@ def strength_optimiser_new(Y, ratios, factors, target_bits = 38500, emse = True,
         dwtstep = np.ones((3, N+1))*ratios*step
         Yq, _ = quantdwt(Y, dwtstep, factors, strength)
 
-        # result_clipped = np.clip(result, -1023, 1023) # Maybe put in the main functions
         vlc, header = DWT_huffenc(Yq, dcbits=12, opthuff=True, log=False)
 
         bits = np.sum(vlc[:, 1])

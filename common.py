@@ -19,7 +19,7 @@ h2 = np.array([-1, 2, -1])/4
 g1 = np.array([1, 2, 1])/2
 g2 = np.array([-1, -2, 6, -2, -1])/4
 
-step = 15
+step = 17
 
 PCA_components = 94
 svd_dimension = 100
