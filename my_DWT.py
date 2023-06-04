@@ -230,7 +230,7 @@ def strength_optimiser_new(Y, ratios, factors, target_bits = 38500, emse = True,
         if log: print("bits: {}, strength: {}".format(bits, strength))
         return np.abs(bits-target_bits)
 
-    strength_optimal = minimize_scalar(encoded_size, bounds=(0, 10)).x
+    strength_optimal = minimize_scalar(encoded_size, bounds=(0, 15)).x
 
     return np.float16(strength_optimal)
 
