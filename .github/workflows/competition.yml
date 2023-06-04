@@ -4,9 +4,11 @@ name: SF2 Competition Checker
 
 on:
   push:
-    branches: [ main, reverting ]
+    branches: [ main]
+    branches: [ reverting ]
   pull_request:
-    branches: [ main, reverting ]
+    branches: [ main ]
+    branches: [ reverting ]
 
 jobs:
   build:
