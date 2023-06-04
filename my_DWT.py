@@ -6,7 +6,7 @@ from cued_sf2_lab.laplacian_pyramid import bpp
 from cued_sf2_lab.laplacian_pyramid import rowint, rowint2
 from my_LP import quantise
 from cued_sf2_lab.jpeg import quant1, quant2
-from common_exp import *
+from common import *
 from cued_sf2_lab.jpeg import (dwtgroup, runampl, huffenc, 
         diagscan, huffdes, huffgen, huffdflt, quant2)
 from PCA_DWT import *
