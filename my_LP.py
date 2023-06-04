@@ -25,8 +25,10 @@ def quantise(x, step, rise1=None):
     y = quant2(quant1(x, step, rise), step, rise)
     return y
 
+
 def halfcos_filter(n):
     return halfcos(n)
+
 
 def LP(X, h, N):
     Y_list = []
@@ -38,6 +40,7 @@ def LP(X, h, N):
         X_prev = X_downsampled
     return *Y_list, X_prev
 
+
 def inverse_LP(pyramid, h):
     Z_list = []
     Z_last = pyramid[-1]
@@ -45,49 +48,54 @@ def inverse_LP(pyramid, h):
         Z_last = rowint(rowint(Z_last.T, 2*h).T, 2*h) + pyramid[-i]
         Z_list.append(Z_last)
     return Z_list
-        
+
+
 def get_ratios(X, N, h):
     X0 = np.zeros(X.shape)
     pyramid = LP(X0, h, N)
-    energies = []
+    ssim_values = []
     ratios = []
     for layer in range(N+1):
         pos = len(pyramid[layer])//2
         pyramid[layer][pos, pos] = 100
 
         decoded = inverse_LP(pyramid, h)
-        energies.append(np.sum(np.abs(decoded[-1]**2.0)))
-    for energy in energies:
-        ratios.append(np.sqrt(energies[-1]/energy))
+        ssim_values.append(np.sum(np.abs(decoded[-1]**2.0)))
+    for energy in ssim_values:
+        ratios.append(np.sqrt(ssim_values[-1]/energy))
     return ratios
 
-def step_size_optimiser(X, h, target_rms, range, N, equal_mse = True, qrise=None):
-    if equal_mse: ratios = get_ratios(X, N, h)
-    else: ratios = np.ones(N+1)
+
+def step_size_optimiser(X, h, target_rms, range, N, equal_mse=True, qrise=None):
+    if equal_mse:
+        ratios = get_ratios(X, N, h)
+    else:
+        ratios = np.ones(N+1)
     steps = range
     error_list = []
     pyramid = LP(X, h, N)
     for step in steps:
-        pyramid_q = [quantise(image, step*ratios[i], qrise) for i, image in enumerate(pyramid)]
+        pyramid_q = [quantise(image, step*ratios[i], qrise)
+                     for i, image in enumerate(pyramid)]
         decoded = inverse_LP(pyramid_q, h)
         error_list.append(np.abs(np.std(decoded[-1]-X)-target_rms))
     min_index = error_list.index(min(error_list))
     return steps[min_index], ratios
 
 
-
-def LP_quant(X, N, h, equal_mse = True, qrise=None):
+def LP_quant(X, N, h, equal_mse=True, qrise=None):
     X_q = quantise(X, 17, qrise)
     ref_rms = np.std(X-X_q)
-    s, ratios = step_size_optimiser(X, h, ref_rms, np.linspace(0, 12, 100), N, equal_mse, qrise)
+    s, ratios = step_size_optimiser(
+        X, h, ref_rms, np.linspace(0, 12, 100), N, equal_mse, qrise)
     steps = [s*r for r in ratios]
     print("steps:", steps)
-    
+
     pyramid = LP(X, h, N)
     return [quantise(image, s*ratios[i], qrise) for i, image in enumerate(pyramid)]
 
 
-def LP_anaysis(X, N, h, equal_mse = True, plot = False, qrise=None):
+def LP_anaysis(X, N, h, equal_mse=True, plot=False, qrise=None):
     pyramid_q = LP_quant(X, N, h, equal_mse, qrise)
     decoded = inverse_LP(pyramid_q, h)
 
@@ -99,7 +107,6 @@ def LP_anaysis(X, N, h, equal_mse = True, plot = False, qrise=None):
     entropy = 0
     for image in pyramid_q:
         entropy += bpp(image)*image.shape[0]*image.shape[1]
-    
+
     print("ratio:", HXq/entropy)
     return decoded[-1]
-
