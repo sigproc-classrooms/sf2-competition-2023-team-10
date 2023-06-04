@@ -9,7 +9,11 @@ from cued_sf2_lab.jpeg import quant1, quant2
 from common import *
 from cued_sf2_lab.jpeg import (dwtgroup, runampl, huffenc, 
         diagscan, huffdes, huffgen, huffdflt, quant2)
-from PCA_DWT import *
+
+
+# from image_similarity_measures.quality_metrics import fsim, ssim
+from skimage.metrics import structural_similarity as ssim
+
 
 
 def DWT(X, N):
@@ -111,33 +115,44 @@ def DWT_quant(X, emse = True):
     return pca_object, pca_result, factors, strength
 
 
-
-
-
 def get_ratios(X, N, g1, g2):
+
+    Y_zeros = np.zeros(shape = X.shape, dtype = int)
     Y = np.zeros(X.shape)
+
     energies = np.zeros((3, N+1))
     m = X.shape[0]
     for i in range(N):
+        print(f'i: {i}')
         m = m//2
         Y[m//2, 3*m//2] = 100
         Z = inverse_DWT(Y, N, g1, g2)
-        energies[0, i] = np.sum(Z**2.0)
-        Y*=0
+        Y *= 0
+        energies[0, i] = ssim(Y_zeros, Z, data_range = 255)
+        print(f'energy at i={i}: {energies[0, i]}')
+        
         Y[3*m//2, m//2] = 100
         Z = inverse_DWT(Y, N, g1, g2)
-        energies[1, i] = np.sum(Z**2.0)
         Y*=0
-        Y[3*m//2, 3*m//2] = 100
-        Z = inverse_DWT(Y, N, g1, g2)
-        energies[2, i] = np.sum(Z**2.0)
+        energies[1, i] = ssim(Y_zeros, Z, data_range = 255)
+        print(f'energy at i={i}: {energies[1, i]}')
+
+        Y[3*m//2 - 1, 3*m//2 - 1] = 100
+        Z = inverse_DWT(Y_zeros, N, g1, g2)
         Y*=0
+        energies[2, i] = ssim(Y_zeros, Z, data_range = 255)
+        print(f'energy at i={i}: {energies[2, i]}')
+        
     Y[m//2, m//2] = 100
     Z = inverse_DWT(Y, N, g1, g2)
-    energies[0, N] = np.sum(Z**2.0)
-    energies[1, N] =1e10
-    energies[2, N] =1e10
-    # print(energies)
+    Y *= 0
+    energies[0, N] = ssim(Y_zeros, Z, data_range = 255)
+    energies[1, N] = 1e10
+    energies[2, N] = 1e10
+
+    print('Energy matrix is')
+    print(energies)
+
     return np.sqrt(energies[0, 0]/energies[:, :])
 
 
