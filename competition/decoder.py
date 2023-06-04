@@ -17,14 +17,11 @@ def decode(vlc: np.ndarray, header: HeaderType) -> np.ndarray:
     """
     # replace this with your chosen decoding scheme
 
-    header_huff, pca_object, factors, strength = header
+    header_huff, factors, strength = header
 
-    pca_decoded = PCA_huffdec(vlc, pca_object, hufftab=header_huff)
-
-    DWT_decoded = inverse_PCA_DWT(pca_object, pca_decoded)
+    DWT_decoded = DWT_huffdec(vlc, hufftab=header_huff)
 
     DWT_final = quantdwt2(DWT_decoded, factors, strength=strength)
     reconstructed = inverse_DWT(DWT_final, N, g1, g2)
-
 
     return reconstructed

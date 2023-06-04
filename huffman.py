@@ -7,8 +7,8 @@ from cued_sf2_lab.jpeg import (dwtgroup, runampl, huffenc,
         diagscan, huffdes, huffgen, huffdflt, quant2)
 from common import *
 
-def DWT_huffenc(Yq: np.ndarray, N: int = 8,
-        opthuff: bool = False, dcbits = 8, log: bool = True
+def DWT_huffenc(Yq: np.ndarray,
+        opthuff: bool = False, dcbits = 12, log: bool = True
         ):
 
     Yq = Yq.astype('int')
@@ -249,11 +249,9 @@ def PCA_huffdec(vlc: np.ndarray,
 
 
 
-def DWT_huffdec(vlc: np.ndarray, step, factors,
-            strength, 
-            N: int = 8,
+def DWT_huffdec(vlc: np.ndarray, 
         hufftab = None,
-        dcbits: int = 8, W: int = 256, H: int = 256, log: bool = True
+        dcbits: int = 12, W: int = 256, H: int = 256, log: bool = True
         ) -> np.ndarray:
     '''
     Decodes a (simplified) JPEG bit stream to an image
@@ -366,6 +364,5 @@ def DWT_huffdec(vlc: np.ndarray, step, factors,
 
     Zq_inverse_regrouped = dwtgroup(Zq, -N)
     
-    Zi = quantdwt2(Zq_inverse_regrouped, step, factors, strength)
 
-    return Zi
+    return Zq_inverse_regrouped

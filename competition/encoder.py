@@ -13,12 +13,13 @@ def header_bits(header: HeaderType) -> int:
     
     If you have no header, return `0`. """
     # replace this with your size estimate, and a comment explaining how you got it!
-    header_huff, pca_object, factors, strength = header
+    header_huff, factors, strength = header
 
     factors_size = len(factors.flatten()) * 16
+    strength_size = 4
 
 
-    return (len(header_huff.bits) + len(header_huff.huffval)) * 8
+    return (len(header_huff.bits) + len(header_huff.huffval)) * 8 + strength_size + factors_size
 
 
 def encode(X: np.ndarray) -> Tuple[np.ndarray, HeaderType]:
@@ -34,8 +35,7 @@ def encode(X: np.ndarray) -> Tuple[np.ndarray, HeaderType]:
     # then `return vlc, None`.
     
 
-    pca_object, pca_result, factors, strength = DWT_quant(X)
-    vlc, header_huff = PCA_huffenc(pca_result, opthuff=True)
-    header = (header_huff, pca_object, factors, strength)
-
+    DWT_result, factors, strength = DWT_quant(X, log = False)
+    vlc, header_huff = DWT_huffenc(DWT_result, dcbits=12, opthuff=True)
+    header = (header_huff, factors, strength)
     return vlc, header

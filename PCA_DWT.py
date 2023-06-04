@@ -1,21 +1,21 @@
 import numpy as np
-from sklearn.decomposition import PCA
+# from sklearn.decomposition import PCA
 from common import *
 from my_LP import quantise
 
 
-def PCA_DWT_old(X):
+# def PCA_DWT_old(X):
 
-    pca = PCA(n_components=PCA_components)
+#     pca = PCA(n_components=PCA_components)
 
-    pca.fit(X)
-    cumulative_variance = np.cumsum(pca.explained_variance_ratio_)
-    reduced_r = pca.transform(X)
-    return reduced_r
+#     pca.fit(X)
+#     cumulative_variance = np.cumsum(pca.explained_variance_ratio_)
+#     reduced_r = pca.transform(X)
+#     return reduced_r
 
-def inverse_PCA_DWT_old(reduced_r):
-    pca = PCA(n_components=PCA_components)
-    return pca.inverse_transform(reduced_r)
+# def inverse_PCA_DWT_old(reduced_r):
+#     pca = PCA(n_components=PCA_components)
+#     return pca.inverse_transform(reduced_r)
 
 def SVD(X):
 
