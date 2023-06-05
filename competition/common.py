@@ -13,13 +13,13 @@ HeaderType = HuffmanTable  # using the example jpeg encoder
 # a constant shared by the encoder and decoder
 jpeg_quant_size = 128
 
-N = 7
+N = 5
 h1 = np.array([-1, 2, 6, 2, -1])/8
 h2 = np.array([-1, 2, -1])/4
 g1 = np.array([1, 2, 1])/2
 g2 = np.array([-1, -2, 6, -2, -1])/4
 
-step = 20
+step = 17
 
 PCA_components = 94
 svd_dimension = 100
